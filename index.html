@@ -505,8 +505,11 @@ function lookup(w){
 }
 // ---- telaffuz ve hikâyeden örnek cümle ----
 const IPA={};
-const ipaOf=w=>IPA[String(w).toLowerCase()]||'';
-const ipaLine=w=>ipaOf(w)?`<div class="small">/${esc(ipaOf(w))}/</div>`:'';
+const RU_EX={'что':'şto','чтобы':'ştobı','конечно':'konyeşno','его':'yevo','сегодня':'sivodnya','здравствуйте':'zdrastvuyte','здравствуй':'zdrastvuy','чего':'çivo','ничего':'niçivo','скучно':'skuşno','очень':'oçin','вокзал':'vagzal','солнце':'sontse','чувство':'çustva','лестница':'lyesnitsa','сердце':'syertse','что-то':'şto-ta'};
+const RU_V='аеёиоуыэюя',RU_M={а:'a',б:'b',в:'v',г:'g',д:'d',ж:'j',з:'z',и:'i',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'h',ц:'ts',ч:'ç',ш:'ş',щ:'şç',ы:'ı',э:'e'},RU_J={е:['ye','e'],ё:['yo','o'],ю:['yu','u'],я:['ya','a']},RU_F={б:'p',в:'f',г:'k',д:'t',ж:'ş',з:'s'};
+function ruWord(w){w=w.toLowerCase();if(RU_EX[w])return RU_EX[w];w=w.replace(/ться$/,'тса').replace(/тся$/,'тса').replace(/(ого|его)$/,m=>m==='ого'?'ова':'ева');let o='';for(let i=0;i<w.length;i++){const c=w[i],p=w[i-1];if(c==='ь'||c==='ъ'||c==='́')continue;if(RU_J[c]){const prevV=!p||RU_V.includes(p)||p==='ь'||p==='ъ';const hush='жшцчщ'.includes(p||'');o+=(prevV||(c!=='е'&&!hush&&p!==undefined&&!'жшцчщ'.includes(p)))?RU_J[c][0]:RU_J[c][1];continue}const last=i===w.length-1;if(last&&RU_F[c]){o+=RU_F[c];continue}o+=RU_M[c]!==undefined?RU_M[c]:c}return o}
+const ipaOf=w=>{const s=String(w);if(!/[а-яё]/i.test(s))return'';return s.replace(/[а-яёА-ЯЁ]+/g,ruWord)};
+const ipaLine=w=>ipaOf(w)?`<div class="small" style="color:#64748b">okunuş: ${esc(ipaOf(w))}</div>`:'';
 let EXI=null,EXN=0;
 function exIndex(){const ls=LEVELS.filter(l=>DATA[l]);if(EXI&&EXN===ls.length)return EXI;EXI={};EXN=ls.length;
   ls.forEach(l=>DATA[l].stories.forEach(s=>{const e=spl(s.en.replace(ZW,'')),t=spl(s.tr.replace(ZW,'')),al=e.length===t.length;
