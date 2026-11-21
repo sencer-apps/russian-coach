@@ -2711,6 +2711,42 @@ async function boot(){
 }
 function logout(){try{localStorage.removeItem('ec_code');}catch(e){}LK={};WID=0;try{localStorage.removeItem('ec_w');}catch(e){}Object.keys(DATA).forEach(k=>delete DATA[k]);const w=$('#wm');if(w)w.remove();duelLeave();view='home';showLogin();}
 boot();
+
+/* --- Latin okunuş (isteğe bağlı) --- */
+(function(){
+let ON=false;try{ON=localStorage.getItem('rc_lat')==='1';}catch(e){}
+const SEG=/[а-яёА-ЯЁ]+(?:[\s,.!?:;«»'\-—]+[а-яёА-ЯЁ]+)*/g;
+const SKIP=/^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|OPTION)$/;
+let busy=false,pend=false,obs=null;
+function conv(t){const m=t.match(SEG);return m?m.map(x=>x.replace(/[а-яёА-ЯЁ]+/g,ruWord)).join(' / '):'';}
+function clear(){document.querySelectorAll('#app .rt').forEach(e=>e.remove());}
+function apply(){
+  if(busy)return;busy=true;if(obs)obs.disconnect();
+  const app=document.getElementById('app');
+  if(app){
+    clear();
+    if(ON){
+      const w=document.createTreeWalker(app,NodeFilter.SHOW_TEXT,null);const list=[];let n;
+      while(n=w.nextNode()){const p=n.parentNode;if(!p||SKIP.test(p.nodeName)||p.closest('textarea,input,select,.rt'))continue;if(/[а-яёА-ЯЁ]/.test(n.nodeValue))list.push(n);}
+      list.forEach(n=>{const r=conv(n.nodeValue);if(!r)return;const s=document.createElement('span');s.className='rt';s.style.cssText='display:block;font-size:.72em;font-weight:400;color:#64748b;line-height:1.25;font-style:normal;text-align:inherit';s.textContent=r;n.parentNode.insertBefore(s,n.nextSibling);});
+    }
+  }
+  const b=document.getElementById('rtb');if(b){b.textContent=ON?'Aa Okunuş: Açık':'Aa Okunuş: Kapalı';b.style.background=ON?'#0ea5e9':'#fff';b.style.color=ON?'#fff':'#334155';}
+  if(obs&&app)obs.observe(app,{childList:true,subtree:true,characterData:true});
+  busy=false;
+}
+function sched(){if(pend)return;pend=true;requestAnimationFrame(()=>{pend=false;apply();});}
+function init(){
+  if(document.getElementById('rtb'))return;
+  const b=document.createElement('button');b.id='rtb';b.type='button';
+  b.style.cssText='position:fixed;top:6px;right:6px;z-index:50;padding:4px 9px;font-size:12px;min-height:0;min-width:0;border:1px solid #cbd5e1;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.15);width:auto;margin:0;font-weight:700';
+  b.onclick=()=>{ON=!ON;try{localStorage.setItem('rc_lat',ON?'1':'0');}catch(e){}apply();};
+  document.body.appendChild(b);
+  obs=new MutationObserver(sched);apply();
+}
+window.addEventListener('load',()=>setTimeout(init,300));
+setInterval(()=>{if(!document.getElementById('rtb'))init();},1500);
+})();
 </script>
 </body>
 </html>
