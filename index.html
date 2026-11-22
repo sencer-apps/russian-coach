@@ -102,7 +102,7 @@ const tchips=()=>`<div class="row">${Object.entries(TOPICS).map(([k,v])=>`<butto
 function wire(){document.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{S.lvl=b.dataset.l;save();render();});document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{S.topic=b.dataset.t;save();render();});}
 function rHome(){
   const kn=Object.keys(S.known).length;
-  $('#app').innerHTML=`<h1>Rusça Koç</h1><p class="sub">A1'den C2'ye • Kelime • Dinleme • Konuşma</p>${restoreCard()}${goalCard()}
+  $('#app').innerHTML=`<h1>Rusça Koç</h1><p class="sub">A1'den C2'ye • Kelime • Dinleme • Konuşma</p>${restoreCard()}${goalCard()}${planCard()}
   <div class="card"><b>Seviyen: <span class="lv">${S.lvl}</span> ${LVNAME[S.lvl]}</b><p class="sub">Seviyeyi istediğin zaman değiştirebilirsin.</p>${chips()}<div style="margin-top:10px"><button class="ghost" id="goTest">📝 ${S.tested?'Seviye testini tekrarla':'Seviyemi test et (3 dk)'}</button></div></div>
     <button id="gS" style="width:100%;margin:10px 0;padding:16px;font-size:18px">📖 Hikâyeler: Rusça okuma yolculuğu</button>
   <div class="grid"><button id="gW" style="grid-column:span 2">🧠 Çalış: Defter • Dinle-yaz • Konuşma</button><button id="gC">🃏 Kelime Kartları</button><button id="gQ">✅ Quiz</button>${HASNET?'<button id="gD" style="grid-column:span 2;background:#db2777">⚔️ Biriyle yarış</button>':''}</div>
@@ -941,7 +941,24 @@ function goalCard(){
   <div class="small">${p>=100?'Bugünkü hedefi tamamladın! 🎉':'Hedefe '+(S.goal-v)+' XP kaldı.'} • ✅ Bildiğin kelime: ${Object.keys(S.known).length}</div>
   <div class="row" style="margin-top:8px">${due?`<button class="ghost sm" id="hdue">📒 ${due} kelime tekrar zamanı</button>`:''}${misDue().length?`<button class="ghost sm" id="hmis">❗ ${misDue().length} yanlışını tekrar et</button>`:''}</div></div>`;
 }
+function planItems(){
+  const it=[],d=DATA[S.lvl];
+  if(nbDue().length)it.push(['📒',nbDue().length+' kelime tekrarı',()=>{NR=null;view='nbr';render();}]);
+  if(misDue().length)it.push(['❗',misDue().length+' yanlışını düzelt',()=>{view='mis';render();}]);
+  if(d&&d.stories){const i=d.stories.findIndex(s=>!S.sd[s.n]);
+    if(i>=0)it.push(['📖','Yeni hikâye: '+(d.stories[i].t||d.stories[i].title||('#'+(i+1))),()=>{CUR={l:S.lvl,i};view='reader';render();}]);
+    else if(d.exam&&!(S.ex[S.lvl]>=d.exam.pass))it.push(['🎓',S.lvl+' seviye sınavı',()=>{CUR={l:S.lvl,k:0,sc:0,sel:null,order:null};view='exam';render();}]);}
+  if(SR)it.push(['🎤','5 cümle konuşma pratiği',()=>{view='speak';render();}]);
+  return it.slice(0,4);
+}
+const PLL={};
+function planCard(){
+  if(!DATA[S.lvl]&&LK[S.lvl]&&!PLL[S.lvl]){PLL[S.lvl]=1;loadLevel(S.lvl).then(()=>{if(view==='home')rHome();}).catch(()=>{});}
+  const it=planItems();if(!it.length)return '';
+  return `<div class="card"><b>📅 Bugünün planı</b><div class="small" style="margin:4px 0 8px">Sırayla yap, 10–15 dakikada biter.</div>${it.map((x,i)=>`<button class="ghost" id="hp${i}" style="width:100%;text-align:left;margin-top:6px">${x[0]} ${esc(x[1])}</button>`).join('')}</div>`;
+}
 function wireHome(){
+  planItems().forEach((x,i)=>{const b=$('#hp'+i);if(b)b.onclick=x[2];});
   if($('#owlh'))$('#owlh').onclick=()=>{OH=0;view='help';render();};
   if($('#rsok'))$('#rsok').onclick=()=>{if(applyBackup(RS.data.data)){RS.data=null;toast('✅ Yedek geri yüklendi');render();}};
   if($('#hdue'))$('#hdue').onclick=()=>{NR=null;view='nbr';render();};
